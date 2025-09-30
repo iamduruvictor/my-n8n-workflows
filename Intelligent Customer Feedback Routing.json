@@ -1,0 +1,724 @@
+{
+  "name": "Intelligent Customer Feedback Routing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "75f05229-960d-46c3-9e01-5f1214b4a808",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        48
+      ],
+      "id": "285e9174-386a-463c-9644-6e253fa4ae38",
+      "name": "Webhook",
+      "webhookId": "75f05229-960d-46c3-9e01-5f1214b4a808"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "95262460-74d6-4cdc-975d-e22609bcbe0f",
+              "leftValue": "={{ $json.body.data.fields[3].value[0] }}",
+              "rightValue": "Feature Request",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        48
+      ],
+      "id": "0c284ae8-ddef-46b6-af3f-2ae5d4a8e201",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qO96hkrNUU97RqiX5M5NJxG0pkjHwLV4QNeAQy99fak",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback Ticket",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qO96hkrNUU97RqiX5M5NJxG0pkjHwLV4QNeAQy99fak/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 368233114,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qO96hkrNUU97RqiX5M5NJxG0pkjHwLV4QNeAQy99fak/edit#gid=368233114"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('Edit Fields').item.json.body.data.fields[0].value }}",
+            "Country of Residence": "={{ $('Edit Fields').item.json.body.data.fields[2].value }}",
+            "Email": "={{ $('Edit Fields').item.json.body.data.fields[1].value }}",
+            "Feedback Type": "={{ $('Edit Fields').item.json.body.data.fields[3].value[0] }}",
+            "Feedback Message": "={{ $('Edit Fields').item.json.body.data.fields[4].value }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Country of Residence",
+              "displayName": "Country of Residence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback Type",
+              "displayName": "Feedback Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback Message",
+              "displayName": "Feedback Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "ca7d63c1-0785-4d3a-8bda-48875a4049e3",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "APpHPfryDuybi47t",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qO96hkrNUU97RqiX5M5NJxG0pkjHwLV4QNeAQy99fak",
+          "mode": "list",
+          "cachedResultName": "Customer Feedback Ticket",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qO96hkrNUU97RqiX5M5NJxG0pkjHwLV4QNeAQy99fak/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qO96hkrNUU97RqiX5M5NJxG0pkjHwLV4QNeAQy99fak/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.body.data.fields[0].value }}",
+            "Email": "={{ $json.body.data.fields[1].value }}",
+            "Country of Residence ": "={{ $json.body.data.fields[2].value }}",
+            "Feedback Type": "={{ $json.body.data.fields[3].value[0] }}",
+            "Feedback Message": "={{ $json.body.data.fields[4].value }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Country of Residence ",
+              "displayName": "Country of Residence ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback Type",
+              "displayName": "Feedback Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback Message",
+              "displayName": "Feedback Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        672,
+        144
+      ],
+      "id": "b7ee11fb-4e27-496a-a80a-62948a68c97e",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "APpHPfryDuybi47t",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.data.fields[1].value }}",
+        "subject": "hello",
+        "emailType": "text",
+        "message": "=Hi  {{ $json.body.data.fields[0].value.split( \" \")[0] }},\n\nThanks for the feedback, We will try looking into it as soon as possible.\n\nThanks for choosing us.\n\nSigned,\nManagement.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        -240
+      ],
+      "id": "caf231f8-73f7-4827-b83b-5012889a5807",
+      "name": "Send a message",
+      "webhookId": "7e0dbaae-499a-4561-9dc7-23995a1486f7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hTxtXkki6JZBzfar",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.data.fields[1].value }}",
+        "subject": "Ticket Received ",
+        "emailType": "text",
+        "message": "=Hi  {{ $json.body.data.fields[0].value.split( \" \")[0] }},\n\nWe have successfully recieved your ticket. We will hopefully get back to your as soon as possible.\n\nThanks for choosing us.\n\nSigned,\nManagement.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        336
+      ],
+      "id": "df43d9de-d44f-4857-a76b-295e24763158",
+      "name": "Send a message1",
+      "webhookId": "191bbc2a-e8ae-4134-b259-460a35b894ec",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hTxtXkki6JZBzfar",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['Feedback Type'] }}",
+                    "rightValue": "Bug Report",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a077ae57-c3b0-4d28-b384-79996f87fc51"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Bug Report"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6a8dd73b-2fb1-4973-a7b2-9657b64ff8e4",
+                    "leftValue": "={{ $json['Feedback Type'] }}",
+                    "rightValue": "Billing Inquiry",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Billing Inquiry"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "87efe248-bc35-4be5-9750-dce9bf52afe1",
+                    "leftValue": "={{ $json['Feedback Type'] }}",
+                    "rightValue": "General Support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "General Support"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        896,
+        128
+      ],
+      "id": "43a3ba91-61c4-469b-b52a-69b989c4f5ec",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "={{ $json['Feedback Message'] }}",
+        "emailType": "text",
+        "message": "=Hi Team,    \n\nWe've got a new costumer feedback ticket on Bug Report.    \n\nName: {{ $json.Name }}  \nEmail: {{ $json.Email }}  \nCountry of Residence: {{ $json['Country of Residence '] }}  \nFeedback Type: {{ $json['Feedback Type'] }}  \nFeedback Message: {{ $json['Feedback Message'] }}    \nFollow up immediimmediately.    \n\nSigned,  \nManagement.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        -48
+      ],
+      "id": "96841195-a7bb-4ece-a039-80dec61ba31c",
+      "name": "Send a message2",
+      "webhookId": "59cbb1fc-6a2a-49eb-bee4-72b52550a57b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hTxtXkki6JZBzfar",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('If1').item.json.body.data.fields[1].value }}",
+        "subject": "={{ $('If1').item.json.body.data.fields[3].value[0] }}",
+        "emailType": "text",
+        "message": "=Hi Team,  \n\nWe've got a new costumer feedback ticket on Billing Inquiry.  \n\nName: {{ $json.Name }} \nEmail: {{ $json.Email }} \nCountry of Residence: {{ $json['Country of Residence '] }} \nFeedback Type: {{ $json['Feedback Type'] }} \nFeedback Message: {{ $json['Feedback Message'] }}  \n\nFollow up immediimmediately.  \n\nSigned, \nManagement.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        144
+      ],
+      "id": "5eb769f5-0e01-40d7-9963-8c684b702851",
+      "name": "Send a message3",
+      "webhookId": "59cbb1fc-6a2a-49eb-bee4-72b52550a57b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hTxtXkki6JZBzfar",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C095F1VTRUP",
+          "mode": "list",
+          "cachedResultName": "all-the-dv-group"
+        },
+        "text": "=Hi Team,\n\nWe've got a new costumer feedback ticket on General Support.\n\nName: {{ $json.Name }}\nEmail: {{ $json.Email }}\nCountry of Residence: {{ $json['Country of Residence '] }}\nFeedback Type: {{ $json['Feedback Type'] }}\nFeedback Message: {{ $json['Feedback Message'] }}\n\nFollow up immediimmediately.\n\nSigned,\nManagement.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        336
+      ],
+      "id": "2d33b41a-dd86-47dd-8f7a-61b2e20a2931",
+      "name": "Send a message4",
+      "webhookId": "94d109b7-9cb2-4869-a1cd-fd747836dd39",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "FRValkmMcYPfoZiy",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c11dc0e8-e007-4560-8866-be1206b7c245",
+              "name": "body.data.fields[0].value",
+              "value": "={{ $json.body.data.fields[0].value }}",
+              "type": "string"
+            },
+            {
+              "id": "b67c0754-e513-43ff-8b4f-44242d21756f",
+              "name": "body.data.fields[1].value",
+              "value": "={{ $json.body.data.fields[1].value }}",
+              "type": "string"
+            },
+            {
+              "id": "2f5b7790-33de-443e-ba5c-17aa1ec54865",
+              "name": "body.data.fields[2].value",
+              "value": "={{ $json.body.data.fields[2].value }}",
+              "type": "string"
+            },
+            {
+              "id": "cd71e083-205a-42fd-b63b-eb4bda89c75f",
+              "name": "body.data.fields[3].value[0]",
+              "value": "={{ $json.body.data.fields[3].options.find(option => option.id === $json.body.data.fields[3].value[0] ).text.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "2ccf3e5c-835c-4512-9e1a-9c0480cb1b1f",
+              "name": "body.data.fields[4].value",
+              "value": "={{ $json.body.data.fields[4].value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        48
+      ],
+      "id": "e74fd872-243a-4df2-bec6-fd7265e20bf8",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "victor48.app.n8n.cloud",
+            "user-agent": "Tally Webhooks",
+            "content-length": "1069",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, br",
+            "baggage": "sentry-environment=production,sentry-release=8b6ce5c01b14a78a561dde46c4ea034ebfd55057,sentry-public_key=6af4b6673f1648edaa8fef3f2ca43405,sentry-trace_id=89da38b6a203619409c96844cd5c26cd,sentry-org_id=407628,sentry-sampled=false,sentry-sample_rand=0.8970228588266784,sentry-sample_rate=0.005",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "34.96.41.96",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "BE",
+            "cf-ray": "96752e511401c3ba-LHR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sentry-trace": "89da38b6a203619409c96844cd5c26cd-7866e8386f5b5b5c-0",
+            "x-forwarded-for": "34.96.41.96, 172.68.229.67",
+            "x-forwarded-host": "victor48.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-27-56cf765df-4f2rr",
+            "x-is-trusted": "yes",
+            "x-real-ip": "34.96.41.96"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "eventId": "d751ac61-27b7-434f-b404-7ec86d5cbdc7",
+            "eventType": "FORM_RESPONSE",
+            "createdAt": "2025-07-30T13:25:14.997Z",
+            "data": {
+              "responseId": "kd58PMd",
+              "submissionId": "kd58PMd",
+              "respondentId": "ZMMdWA",
+              "formId": "mYleb5",
+              "formName": "Feedback Ticket ",
+              "createdAt": "2025-07-30T13:25:14.000Z",
+              "fields": [
+                {
+                  "key": "question_9Zbd94",
+                  "label": "Name:",
+                  "type": "INPUT_TEXT",
+                  "value": "Emmanuel"
+                },
+                {
+                  "key": "question_erkBQo",
+                  "label": "Email:",
+                  "type": "INPUT_EMAIL",
+                  "value": "tochukwu@gmail.com"
+                },
+                {
+                  "key": "question_WRxAEQ",
+                  "label": "Country of Residence:",
+                  "type": "INPUT_TEXT",
+                  "value": "Asia"
+                },
+                {
+                  "key": "question_a47B5y",
+                  "label": "Feedback Type:",
+                  "type": "MULTIPLE_CHOICE",
+                  "value": [
+                    "3baf8e16-202c-44d4-89a5-543187f4d862"
+                  ],
+                  "options": [
+                    {
+                      "id": "629187be-d4bc-4b35-a42d-0de15c3d3dea",
+                      "text": "Bug Report "
+                    },
+                    {
+                      "id": "3baf8e16-202c-44d4-89a5-543187f4d862",
+                      "text": "Feature Request "
+                    },
+                    {
+                      "id": "d32f34fa-a0e1-4742-86fa-c8fb6c054104",
+                      "text": "Billing Inquiry "
+                    },
+                    {
+                      "id": "3c728f6c-0769-42ff-aef7-51fcbdaaadd0",
+                      "text": "General Support "
+                    }
+                  ]
+                },
+                {
+                  "key": "question_6Kadj5",
+                  "label": "Feedback Message:",
+                  "type": "TEXTAREA",
+                  "value": "Yes"
+                }
+              ]
+            }
+          },
+          "webhookUrl": "https://victor48.app.n8n.cloud/webhook-test/75f05229-960d-46c3-9e01-5f1214b4a808",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message4": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "27761508-c9ca-4827-9539-2be40df5e54d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "08f5f8f3e06a9b00ae0472ef8f2e87cd5dcbb2e0482e74fe9752e4b44ea6ab1e"
+  },
+  "id": "b7IPLu8mRSqRCvBI",
+  "tags": [
+    {
+      "createdAt": "2025-07-29T23:31:19.052Z",
+      "updatedAt": "2025-07-29T23:31:19.052Z",
+      "id": "5EYiAcxFBXnXGvur",
+      "name": "2nd Project"
+    }
+  ]
+}
