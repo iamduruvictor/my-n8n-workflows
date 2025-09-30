@@ -30,7 +30,7 @@ Below is a detailed breakdown of each workflow available in this repository.
     4.  Stores the final structured output in a designated Google Sheet, categorized by topic.
 * **Demonstrates:** Scheduled execution, Advanced LLM prompting, and Structured data output.
 
-### 2. Intelligent Customer Feedback Loop (`intelligent-customer-feedback-report.json`)
+### 2. Intelligent Customer Feedback Loop (`intelligent-customer-feedback-routing.json`)
 * **Objective:** Automatically analyze incoming customer feedback for sentiment and topic, then route it to the appropriate team for action.
 * **Process Summary:**
     1.  Starts with a **Webhook Trigger** to receive feedback (from Tally form).
