@@ -1,0 +1,202 @@
+{
+  "name": "Daily Sales Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 22 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "93d6344a-674f-4585-ac23-a7a3a1031492",
+      "name": "Schedule Trigger",
+      "notesInFlow": true,
+      "notes": "Activates this workflow at 10 pm everyday"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1m1q-U2YYioV4R2lqZKe1a40il6_XjBszC8KZ3fR6V4E",
+          "mode": "list",
+          "cachedResultName": "Sales Record",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m1q-U2YYioV4R2lqZKe1a40il6_XjBszC8KZ3fR6V4E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1m1q-U2YYioV4R2lqZKe1a40il6_XjBszC8KZ3fR6V4E/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Date",
+              "lookupValue": "={{ $today.toFormat('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "22e4d976-77bd-4299-8670-8c9f4828a26f",
+      "name": "Get row(s) in sheet",
+      "notesInFlow": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g4qEuurVeKVgDlTr",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Get the rows that has the current date on the date column in my Google sheet "
+    },
+    {
+      "parameters": {
+        "jsCode": "const transactions = $input.all();\nlet totalSales = 0;\nlet salesByPerson = {};\n\ntransactions.forEach(item => {\n  // Convert the Amount to a number first, and handle the dollar sign if it exists\n  const amount = parseFloat(item.json.Amount.toString().replace('$', ''));\n  if (!isNaN(amount)) {\n    totalSales += amount;\n    salesByPerson[item.json.SalesPerson] = (salesByPerson[item.json.SalesPerson] || 0) + amount;\n  }\n});\n\nlet topSalesperson = null;\nlet topSalespersonAmount = 0;\n\nfor (const person in salesByPerson) {\n  if (salesByPerson[person] > topSalespersonAmount) {\n    topSalespersonAmount = salesByPerson[person];\n    topSalesperson = person;\n  }\n}\n\nreturn [{ json: {\n  totalTransactions: transactions.length,\n  // Add the dollar sign to the totalSalesAmount\n  totalSalesAmount: '$' + totalSales,\n  topSalesperson: topSalesperson,\n  // Add the dollar sign to the topSalespersonAmount\n  topSalespersonAmount: '$' + topSalespersonAmount\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "03c0c248-ca7d-47da-9d5f-b32817ce1975",
+      "name": "Code",
+      "notesInFlow": true,
+      "notes": "This node calculates the total transanction, total sales amount and also filters the sales persona with the highest sales amount"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "01da2429-54f0-4d26-8226-a9c863069eba",
+              "name": "=daily_report_html",
+              "value": "=<div style=\"font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;\">   <div style=\"background-color: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0;\">     <h2 style=\"color: #333333; margin-top: 0;\">Daily Sales Report</h2>     <p>Here is the summary of today's sales {{ $now.toFormat('MMMM dd, yyyy') }}:</p>     <table style=\"width: 100%; border-collapse: collapse; margin-top: 20px;\">       <tr style=\"background-color: #007bff; color: #ffffff;\">         <th style=\"padding: 12px; text-align: left;\">Metric</th>         <th style=\"padding: 12px; text-align: left;\">Value</th>       </tr>       <tr>         <td style=\"padding: 12px; border: 1px solid #e0e0e0;\">Total Transactions</td>         <td style=\"padding: 12px; border: 1px solid #e0e0e0;\">{{ $json.totalTransactions }}</td>       </tr>       <tr>         <td style=\"padding: 12px; border: 1px solid #e0e0e0;\">Total Sales Amount</td>         <td style=\"padding: 12px; border: 1px solid #e0e0e0;\">{{ $json.totalSalesAmount }}</td>       </tr>       <tr>         <td style=\"padding: 12px; border: 1px solid #e0e0e0;\">Top Salesperson</td>         <td style=\"padding: 12px; border: 1px solid #e0e0e0;\">{{ $json.topSalesperson }} ({{ $json.topSalespersonAmount }})</td>       </tr>     </table>     <p style=\"margin-top: 20px; font-size: 12px; color: #888888;\">Have a nice sleep 😊.</p>   </div> </div>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "a0934057-9c07-47cc-8202-4417e896909e",
+      "name": "Edit Fields",
+      "notesInFlow": true,
+      "notes": "This nodes uses html to style the output from the code node to look more appealing and professional"
+    },
+    {
+      "parameters": {
+        "sendTo": "victor.practice.dev@gmail.com ",
+        "subject": "Daily Sales Report",
+        "message": "={{ $json.daily_report_html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "2a83ac20-7a4e-49b0-bfec-3d33a68b6653",
+      "name": "Send a message",
+      "webhookId": "d40f4a9c-53fc-450c-a9c7-837a66eb90b1",
+      "notesInFlow": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z58IjR0j6wN6X3TW",
+          "name": "Gmail account"
+        }
+      },
+      "notes": "This nodes send the the sales report to my gmail"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "43f6f11e-c80e-4f0b-995c-e020a7331d1e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43d63571f66d3b7726938033dfc00b737348a017ee071f520817b766217c8bf8"
+  },
+  "id": "cqITc1ysIUa1HMrM",
+  "tags": [
+    {
+      "createdAt": "2025-08-15T11:24:31.984Z",
+      "updatedAt": "2025-08-15T11:24:31.984Z",
+      "id": "hgz3QU8aU8EGSgef",
+      "name": "7th project"
+    }
+  ]
+}

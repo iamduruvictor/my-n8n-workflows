@@ -1,0 +1,558 @@
+{
+  "name": "Automated Lead Capture & Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "7bfffede-7cfe-4cfc-a303-fcdd8ddfd461",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -592,
+        144
+      ],
+      "id": "d86e96b6-da79-4b83-9d23-13903a904b47",
+      "name": "Webhook",
+      "webhookId": "7bfffede-7cfe-4cfc-a303-fcdd8ddfd461",
+      "notesInFlow": true,
+      "notes": "The Webhook recieves the data of the lead from Tally form through it's URL"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appPA9NVAMzLIWBOl",
+          "mode": "list",
+          "cachedResultName": "Lead Capture",
+          "cachedResultUrl": "https://airtable.com/appPA9NVAMzLIWBOl"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblVK34q1YxyeQKCH",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appPA9NVAMzLIWBOl/tblVK34q1YxyeQKCH"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.body.data.fields[0].value }}",
+            "Email": "={{ $json.body.data.fields[1].value }}",
+            "Phone": "={{ $json.body.data.fields[2].value }}",
+            "Source": "Website Form",
+            "Urgency": "={{ $json.body.data.fields[4].options.find(option => option.id === $json.body.data.fields[4].value[0]).text.trim() }}",
+            "Service": "={{ $json.body.data.fields[3].options.find(option => option.id === $json.body.data.fields[3].value[0]).text }}",
+            "Budget Range": "={{ $json.body.data.fields[5].options.find(option => option.id === $json.body.data.fields[5].value[0]).text.trim() }}",
+            "Tell us about your project": "={{ $json.body.data.fields[6].value }}",
+            "Status": "New"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Website Form",
+                  "value": "Website Form"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Service",
+              "displayName": "Service",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Social Media",
+                  "value": "Social Media"
+                },
+                {
+                  "name": "Seo",
+                  "value": "Seo"
+                },
+                {
+                  "name": "Branding",
+                  "value": "Branding"
+                },
+                {
+                  "name": "Website Design ",
+                  "value": "Website Design "
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Immediately",
+                  "value": "Immediately"
+                },
+                {
+                  "name": "1 - 2 Weeks",
+                  "value": "1 - 2 Weeks"
+                },
+                {
+                  "name": "3 - 4 Weeks",
+                  "value": "3 - 4 Weeks"
+                },
+                {
+                  "name": "1 Month+",
+                  "value": "1 Month+"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Budget Range",
+              "displayName": "Budget Range",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "$500 - $1000",
+                  "value": "$500 - $1000"
+                },
+                {
+                  "name": "$1500 - $2000",
+                  "value": "$1500 - $2000"
+                },
+                {
+                  "name": "$2500 - $4500",
+                  "value": "$2500 - $4500"
+                },
+                {
+                  "name": "$5000 - Above",
+                  "value": "$5000 - Above"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tell us about your project",
+              "displayName": "Tell us about your project",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "New",
+                  "value": "New"
+                },
+                {
+                  "name": "Coverted",
+                  "value": "Coverted"
+                },
+                {
+                  "name": "Lost",
+                  "value": "Lost"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -288,
+        144
+      ],
+      "id": "2e266282-5e69-45e1-bee2-f381598fc93b",
+      "name": "Create a record",
+      "notesInFlow": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "RDfVaeEkfASrnmt2",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      },
+      "notes": "Airtable then recieves the data from webhook and uses it to populate it's database."
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C095F1VTRUP",
+          "mode": "list",
+          "cachedResultName": "all-the-dv-group"
+        },
+        "text": "=Hi Team,\n\nWe just got a new lead:\nName: {{ $json.fields.Name }}\nEmail: {{ $json.fields.Email }}\nPhone: {{ $json.fields.Phone }}\nStatus: {{ $json.fields.Status }}\nSource: {{ $json.fields.Source }}\nDate: {{ $json.fields.Date }}\nServices: {{ $json.fields.Service }}\nUrgency: {{ $json.fields.Urgency }}\nBudget Range: {{ $json.fields['Budget Range'] }}\nProject Description: {{ $json.fields['Tell us about your project'] }}\n\nFollow up the lead ASAP.\n\nSigned,\nManagement.\n",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        80,
+        -48
+      ],
+      "id": "78d8b89d-026b-4883-a7ef-9cc37795b9f1",
+      "name": "Send a message",
+      "webhookId": "b9c28e81-4c54-4502-861d-5811781fa45a",
+      "notesInFlow": true,
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "FRValkmMcYPfoZiy",
+          "name": "Slack account"
+        }
+      },
+      "notes": "The team automatically gets a message on slack about the new lead onboarding"
+    },
+    {
+      "parameters": {
+        "sendTo": "victor.practice.dev@gmail.com",
+        "subject": "New Lead Onboard",
+        "emailType": "text",
+        "message": "=Hi Sir,\n\nWe got a new lead from our website \nName: {{ $json.fields.Name }}\nEmail: {{ $json.fields.Email }}\nPhone: {{ $json.fields.Phone }}\nStatus: {{ $json.fields.Status }}\nSource: {{ $json.fields.Source }}\nDate: {{ $json.fields.Date }}\nService: {{ $json.fields.Service }}\nUrgency: {{ $json.fields.Urgency }}\nBudget Range: {{ $json.fields['Budget Range'] }}\nProject Description: {{ $json.fields['Tell us about your project'] }}\n\nSigned,\nYour Assistant.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        288,
+        144
+      ],
+      "id": "7bf5373b-162c-4bc6-b8aa-0314a8b30152",
+      "name": "Send a message1",
+      "webhookId": "669d0f5b-c728-4fc2-8366-9b246704edd4",
+      "notesInFlow": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hTxtXkki6JZBzfar",
+          "name": "Gmail account 2"
+        }
+      },
+      "notes": "The Managing Director gets a message on his email about the new lead onbaording."
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.fields.Email }}",
+        "subject": "Request Received Successfully ",
+        "emailType": "text",
+        "message": "=Hi  {{ $json.fields.Name.split(\" \")[0] }},\n\nWe've successful gotten your request. Kindly wait as we will get back to you as soon as possible.\n\nThanks for choosing us.\n\nSigned,\nManagement.\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        112,
+        336
+      ],
+      "id": "40e7374a-0629-496c-ae97-7e96a2f16cb7",
+      "name": "Send a message2",
+      "webhookId": "6536bd00-1abe-4501-b197-e087e33ba9cb",
+      "notesInFlow": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hTxtXkki6JZBzfar",
+          "name": "Gmail account 2"
+        }
+      },
+      "notes": "The Leads automatically get a new message showing that his request has been received."
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "victor48.app.n8n.cloud",
+            "user-agent": "Tally Webhooks",
+            "content-length": "1928",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, br",
+            "baggage": "sentry-environment=production,sentry-release=f18dad37edc24b0de5f6635ff4bd6f9b9fb68a9e,sentry-public_key=6af4b6673f1648edaa8fef3f2ca43405,sentry-trace_id=1354ad19d0bd05f502588983de5b6e19,sentry-org_id=407628,sentry-sampled=false,sentry-sample_rand=0.7311251643851433,sentry-sample_rate=0.005",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "34.96.41.77",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "BE",
+            "cf-ray": "9656579bd573b692-LHR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sentry-trace": "1354ad19d0bd05f502588983de5b6e19-81d17415febfa3b9-0",
+            "x-forwarded-for": "34.96.41.77, 172.71.178.5",
+            "x-forwarded-host": "victor48.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-27-56cf765df-4f2rr",
+            "x-is-trusted": "yes",
+            "x-real-ip": "34.96.41.77"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "eventId": "009485b0-0981-40d9-867d-3955152ea6b3",
+            "eventType": "FORM_RESPONSE",
+            "createdAt": "2025-07-26T19:35:47.739Z",
+            "data": {
+              "responseId": "jaL7NKY",
+              "submissionId": "jaL7NKY",
+              "respondentId": "ZMMdWA",
+              "formId": "mOxAXK",
+              "formName": "Let's Grow Your Brand - Fill Out This Quick Form ",
+              "createdAt": "2025-07-26T19:35:47.000Z",
+              "fields": [
+                {
+                  "key": "question_NXvYAW",
+                  "label": "Name:",
+                  "type": "INPUT_TEXT",
+                  "value": "Duru Emmanuel"
+                },
+                {
+                  "key": "question_qGXWbd",
+                  "label": "Email:",
+                  "type": "INPUT_EMAIL",
+                  "value": "durutochukwu2021@gmail.com"
+                },
+                {
+                  "key": "question_QRpYAA",
+                  "label": "Phone:",
+                  "type": "INPUT_PHONE_NUMBER",
+                  "value": "+2349067372777"
+                },
+                {
+                  "key": "question_Bpqev7",
+                  "label": "Service:",
+                  "type": "MULTIPLE_CHOICE",
+                  "value": [
+                    "c3d6ecb0-138f-42c2-8029-c2cd90a00768"
+                  ],
+                  "options": [
+                    {
+                      "id": "7407e54b-58f8-4b04-9e94-4b171fea299b",
+                      "text": "Social Media "
+                    },
+                    {
+                      "id": "1fe0506e-0bf8-4172-9190-aa9d76216976",
+                      "text": "Seo"
+                    },
+                    {
+                      "id": "473f46cf-8843-4134-b063-45db9174c05f",
+                      "text": "Branding "
+                    },
+                    {
+                      "id": "c3d6ecb0-138f-42c2-8029-c2cd90a00768",
+                      "text": "Website Design "
+                    }
+                  ]
+                },
+                {
+                  "key": "question_kGXzL6",
+                  "label": "Urgency:",
+                  "type": "MULTIPLE_CHOICE",
+                  "value": [
+                    "3855cfa3-a206-4ccd-b733-6a9854dcaf90"
+                  ],
+                  "options": [
+                    {
+                      "id": "10b444bc-bff9-40d1-af44-3183114a43a6",
+                      "text": "Immediately "
+                    },
+                    {
+                      "id": "be30c6a3-0246-4476-b217-802148806cd9",
+                      "text": "1 - 2 Weeks "
+                    },
+                    {
+                      "id": "3855cfa3-a206-4ccd-b733-6a9854dcaf90",
+                      "text": "3 - 4 Weeks"
+                    },
+                    {
+                      "id": "ae0c6336-b94c-47b4-b742-43cf4d99d522",
+                      "text": "1 Month+"
+                    }
+                  ]
+                },
+                {
+                  "key": "question_vDVzRA",
+                  "label": "Budget Range:",
+                  "type": "MULTIPLE_CHOICE",
+                  "value": [
+                    "ec46cbd3-177d-48fa-bc65-5b708cb4ae5c"
+                  ],
+                  "options": [
+                    {
+                      "id": "4dcddb2d-0070-44c3-9bc0-3c8429b49491",
+                      "text": "$500 - $1000"
+                    },
+                    {
+                      "id": "2c65431e-c249-466b-91cf-23cbc2819901",
+                      "text": "$1500 - $2000"
+                    },
+                    {
+                      "id": "c680ab16-f2ad-4e93-a041-22f160578ea2",
+                      "text": "$2500 - $4500"
+                    },
+                    {
+                      "id": "ec46cbd3-177d-48fa-bc65-5b708cb4ae5c",
+                      "text": "$5000 - Above"
+                    }
+                  ]
+                },
+                {
+                  "key": "question_KxAGXM",
+                  "label": "Tell us about your project:",
+                  "type": "TEXTAREA",
+                  "value": "I need this website"
+                }
+              ]
+            }
+          },
+          "webhookUrl": "https://victor48.app.n8n.cloud/webhook/7bfffede-7cfe-4cfc-a303-fcdd8ddfd461",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "037868b3-b21d-4f00-80e3-39b4225aff73",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "08f5f8f3e06a9b00ae0472ef8f2e87cd5dcbb2e0482e74fe9752e4b44ea6ab1e"
+  },
+  "id": "oK2P87GOLf3LBCPU",
+  "tags": [
+    {
+      "createdAt": "2025-07-23T18:58:54.436Z",
+      "updatedAt": "2025-07-23T18:58:54.436Z",
+      "id": "dsoZTAhUePfU9vAb",
+      "name": "1st Project"
+    }
+  ]
+}

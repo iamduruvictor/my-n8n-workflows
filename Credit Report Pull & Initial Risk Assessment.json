@@ -1,0 +1,1330 @@
+{
+  "name": "Credit Report Pull & Initial Risk Assessment Assessment",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "7cd3e44e-3e85-453f-a62e-761aba8ed00c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -288
+      ],
+      "id": "da50260d-443c-4b30-a260-fbcd64c71504",
+      "name": "Webhook",
+      "webhookId": "7cd3e44e-3e85-453f-a62e-761aba8ed00c"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract data from Tally webhook structure\nconst webhookData = $input.first().json;\nconst formData = webhookData.body.data;\nconst fields = formData.fields;\n\nconsole.log('=== WEBHOOK DEBUG ===');\nconsole.log('Total fields received:', fields.length);\n\n// Helper function to get field value by label - IMPROVED\nfunction getFieldValue(searchLabel) {\n  console.log('Searching for field:', searchLabel);\n  \n  const field = fields.find(f => {\n    const label = f.label.toLowerCase().trim();\n    const search = searchLabel.toLowerCase().trim();\n    return label.includes(search) || label === search;\n  });\n  \n  if (!field) {\n    console.log('Field not found:', searchLabel);\n    return null;\n  }\n  \n  console.log('Found field:', field.label, 'Type:', field.type, 'Value:', field.value);\n  \n  // Handle different field types\n  switch (field.type) {\n    case 'INPUT_TEXT':\n    case 'INPUT_EMAIL':\n    case 'INPUT_PHONE_NUMBER':\n    case 'INPUT_DATE':\n    case 'TEXTAREA':\n      return field.value ? field.value.toString().trim() : null;\n      \n    case 'INPUT_NUMBER':\n      return field.value ? parseFloat(field.value) : 0;\n      \n    case 'MULTIPLE_CHOICE':\n      if (field.options && field.value && field.value.length > 0) {\n        const selectedOption = field.options.find(opt => opt.id === field.value[0]);\n        return selectedOption ? selectedOption.text : null;\n      }\n      return null;\n      \n    case 'SIGNATURE':\n      return field.value && field.value.length > 0 ? field.value[0].url : null;\n      \n    case 'CHECKBOXES':\n      // Handle both array format and boolean format\n      if (Array.isArray(field.value)) {\n        return field.value.length > 0;\n      }\n      return field.value === true;\n      \n    default:\n      return field.value;\n  }\n}\n\n// Generate unique application ID\nconst appId = 'APP-' + Date.now() + '-' + formData.responseId;\n\n// Extract form data with improved field matching\nconst fullName = getFieldValue('full legal name');\nconst email = getFieldValue('email');\nconst phone = getFieldValue('phone');\nconst dateOfBirth = getFieldValue('date of birth');\nconst ssn = getFieldValue('social security number');\nconst currentAddress = getFieldValue('current address');\nconst employmentStatus = getFieldValue('employment status');\nconst employerName = getFieldValue('employers name');\nconst monthlyIncome = getFieldValue('monthly gross income');\nconst yearsAtJob = getFieldValue('years at current job');\nconst propertyAddress = getFieldValue('property address');\nconst propertyValue = getFieldValue('estimated property value');\nconst mortgageBalance = getFieldValue('current mortgage balance');\nconst loanAmount = getFieldValue('desired loan amount');\nconst loanPurpose = getFieldValue('loan purpose');\nconst electronicSignature = getFieldValue('electronic signature');\nconst creditAuthorization = getFieldValue('credit check authorization');\nconst termsAgreement = getFieldValue('terms and conditions');\nconst dateSigned = getFieldValue('date signed');\n\nconsole.log('=== EXTRACTED VALUES ===');\nconsole.log('Full Name:', fullName);\nconsole.log('Email:', email);\nconsole.log('Monthly Income:', monthlyIncome);\nconsole.log('Loan Amount:', loanAmount);\nconsole.log('Property Value:', propertyValue);\nconsole.log('Mortgage Balance:', mortgageBalance);\n\n// Clean SSN\nconst cleanSSN = ssn ? ssn.toString().replace(/[^\\d]/g, '') : '';\n\n// Validate critical fields\nif (!fullName || !email || !monthlyIncome || !loanAmount || !propertyValue) {\n  return [{\n    json: {\n      error: true,\n      message: 'Missing critical data - check form field mappings',\n      application_id: appId,\n      debug_data: {\n        fullName: fullName,\n        email: email,\n        monthlyIncome: monthlyIncome,\n        loanAmount: loanAmount,\n        propertyValue: propertyValue\n      }\n    }\n  }];\n}\n\n// Calculate ratios\nconst loanToValue = propertyValue > 0 ? ((loanAmount / propertyValue) * 100) : 0;\nconst currentEquity = propertyValue - (mortgageBalance || 0);\nconst equityPercentage = propertyValue > 0 ? ((currentEquity / propertyValue) * 100) : 0;\n\nconsole.log('=== CALCULATED VALUES ===');\nconsole.log('LTV:', loanToValue);\nconsole.log('Current Equity:', currentEquity);\n\n// Return processed data\nreturn [{\n  json: {\n    // Application metadata\n    application_id: appId,\n    submission_date: formData.createdAt,\n    tally_response_id: formData.responseId,\n    form_name: formData.formName,\n    \n    // Personal information\n    full_name: fullName,\n    email: email,\n    phone: phone,\n    ssn: cleanSSN,\n    date_of_birth: dateOfBirth,\n    current_address: currentAddress,\n    \n    // Employment information\n    employment_status: employmentStatus,\n    employer_name: employerName,\n    gross_monthly_income: monthlyIncome,\n    years_at_current_job: yearsAtJob,\n    \n    // Property information\n    property_address: propertyAddress,\n    property_value: propertyValue,\n    current_mortgage_balance: mortgageBalance || 0,\n    current_equity: currentEquity,\n    equity_percentage: equityPercentage,\n    \n    // Loan information\n    desired_loan_amount: loanAmount,\n    loan_purpose: loanPurpose,\n    loan_to_value: parseFloat(loanToValue.toFixed(2)),\n    \n    // Legal compliance\n    electronic_signature_url: electronicSignature,\n    credit_check_authorized: creditAuthorization,\n    terms_agreed: termsAgreement,\n    date_signed: dateSigned,\n    signature_captured: electronicSignature ? 'Yes' : 'No',\n    \n    // Processing status\n    error: false,\n    status: 'Data Validated and Processed',\n    processed_timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -288
+      ],
+      "id": "c1807b63-ce72-4070-9a74-59062cfd16f6",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f8730b3c-5a69-4514-81dc-0eb6ac60203e",
+              "leftValue": "= {{ $json.error }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -288
+      ],
+      "id": "194ba59c-b5f4-493f-b5e9-d86edc428824",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1n78PQg1zq2rewNz1tggdUi4kTuA893Nph0hcThrO0II",
+          "mode": "list",
+          "cachedResultName": "The DV Group Inc",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1n78PQg1zq2rewNz1tggdUi4kTuA893Nph0hcThrO0II/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Application",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1n78PQg1zq2rewNz1tggdUi4kTuA893Nph0hcThrO0II/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "application_id": "={{ $json.application_id }}",
+            "submission_date": "={{ $json.submission_date.replace(\"T\", \" \").replace(\".000Z\", \"\") }}",
+            "full_name": "={{ $json.full_name }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "date_of_birth": "={{ $json.date_of_birth }}",
+            "ssn": "={{ $json.ssn }}",
+            "current_address": "={{ $json.current_address }}",
+            "employment_status": "={{ $json.employment_status }}",
+            "employer_name": "={{ $json.employer_name }}",
+            "monthly_income": "={{ $json.gross_monthly_income }}",
+            "years_employed": "={{ $json.years_at_current_job }}",
+            "property_address": "={{ $json.property_address }}",
+            "property_value": "={{ $json.property_value }}",
+            "current_mortgage_balance": "={{ $json.current_mortgage_balance }}",
+            "desired_loan_amount": "={{ $json.desired_loan_amount }}",
+            "loan_purpose": "={{ $json.loan_purpose }}",
+            "electronic_signature": "={{ $json.electronic_signature_url }}",
+            "signature_date": "={{ $json.date_signed }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "application_id",
+              "displayName": "application_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "submission_date",
+              "displayName": "submission_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date_of_birth",
+              "displayName": "date_of_birth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ssn",
+              "displayName": "ssn",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "current_address",
+              "displayName": "current_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "employment_status",
+              "displayName": "employment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "employer_name",
+              "displayName": "employer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "monthly_income",
+              "displayName": "monthly_income",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "years_employed",
+              "displayName": "years_employed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_address",
+              "displayName": "property_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_value",
+              "displayName": "property_value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "current_mortgage_balance",
+              "displayName": "current_mortgage_balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "desired_loan_amount",
+              "displayName": "desired_loan_amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "loan_purpose",
+              "displayName": "loan_purpose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "electronic_signature",
+              "displayName": "electronic_signature",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "signature_date",
+              "displayName": "signature_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "credit_score",
+              "displayName": "credit_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "monthly_debt_payments",
+              "displayName": "monthly_debt_payments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "debt_to_income_ratio",
+              "displayName": "debt_to_income_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "loan_to_value_ratio",
+              "displayName": "loan_to_value_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "automated_decisio",
+              "displayName": "automated_decisio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "decision_reason",
+              "displayName": "decision_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "assigned_officer",
+              "displayName": "assigned_officer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " notes",
+              "displayName": " notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "next_steps",
+              "displayName": "next_steps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estimated_interest_rate",
+              "displayName": "estimated_interest_rate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estimated_monthly_payment",
+              "displayName": "estimated_monthly_payment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "risk_processed_date",
+              "displayName": "risk_processed_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "processing_complete",
+              "displayName": "processing_complete",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error",
+              "displayName": "error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        -384
+      ],
+      "id": "79682557-911f-49dd-a3b7-e3498d721b31",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g4qEuurVeKVgDlTr",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://jsonplaceholder.typicode.com/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Header",
+              "value": "Content-Type: application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Body",
+              "value": "={   \"ssn\": \"{{ $json.ssn }}\",   \"name\": \"{{ $json.full_name }}\",   \"address\": \"{{ $json.current_address }}\",   \"income\": {{ $json.gross_monthly_income }} }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        -384
+      ],
+      "id": "eb45c122-25eb-4979-907d-2ecc30c8f3b9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get data from the immediate previous node only\nconst inputData = $input.first().json;\n\nconsole.log('=== SIMPLE DATA EXTRACTION ===');\nconsole.log('Input data:', inputData);\n\n// Generate unique application ID\nconst applicationId = 'APP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);\n\n// Use safe defaults for testing (replace with real form extraction later)\nconst applicationData = {\n  // Application metadata\n  application_id: $('Code').first().json.application_id,\n  submission_date: $('Code').first().json.submission_date,\n  form_name: $('Code').first().json.form_name,\n  \n  // Personal information\n  full_name: $('Code').first().json.full_name,\n  email: $('Code').first().json.email,\n  phone: $('Code').first().json.phone,\n  ssn: $('Code').first().json.ssn,\n  date_of_birth: $('Code').first().json.date_of_birth,\n  current_address: $('Code').first().json.current_address,\n  \n  // Employment information\n  employment_status: $('Code').first().json.employment_status,\n  employer_name: $('Code').first().json.employer_name,\n  gross_monthly_income: $('Code').first().json.gross_monthly_income,\n  years_at_current_job: $('Code').first().json.years_at_current_job,\n  \n  // Property information\n  property_address: $('Code').first().json.property_address,\n  property_value: $('Code').first().json.property_value,\n  current_mortgage_balance: $('Code').first().json.current_mortgage_balance,\n  current_equity: $('Code').first().json.current_equity,\n  equity_percentage: $('Code').first().json.equity_percentage ,\n  \n  // Loan information\n  desired_loan_amount: $('Code').first().json.desired_loan_amount,\n  loan_purpose: $('Code').first().json.loan_purpose,\n  loan_to_value: $('Code').first().json.loan_to_value,\n  \n  // Legal compliance\n  electronic_signature_url: $('Code').first().json.electronic_signature_url,\n  credit_check_authorized: $('Code').first().json.credit_check_authorized,\n  terms_agreed: $('Code').first().json.terms_agreed,\n  date_signed: $('Code').first().json.date_signed,\n  signature_captured: $('Code').first().json.signature_captured\n};\n\n// Calculate financial ratios\nconst monthlyIncome = applicationData.gross_monthly_income;\nconst loanAmount = applicationData.desired_loan_amount;\nconst propertyValue = applicationData.property_value;\n\n// Generate credit score based on income\nconst baseScore = 620;\nconst incomeBonus = Math.min((monthlyIncome / 1000) * 15, 150);\nconst randomFactor = 50; // Fixed for consistent testing\nconst creditScore = Math.min(Math.floor(baseScore + incomeBonus + randomFactor), 850);\n\n// Calculate debt-to-income ratio\nconst estimatedMonthlyDebt = monthlyIncome * 0.20;\nconst debtToIncome = parseFloat(((estimatedMonthlyDebt / monthlyIncome) * 100).toFixed(2));\n\n// Calculate loan-to-value ratio\nconst loanToValue = parseFloat(((loanAmount / propertyValue) * 100).toFixed(2));\n\nconsole.log('=== CALCULATED VALUES ===');\nconsole.log('Credit Score:', creditScore);\nconsole.log('DTI:', debtToIncome);\nconsole.log('LTV:', loanToValue);\n\n// Decision logic\nlet decision = '';\nlet reason = '';\nlet nextSteps = '';\nlet estimatedRate = 0;\n\nif (creditScore >= 740 && debtToIncome <= 36 && loanToValue <= 75) {\n  decision = 'APPROVED';\n  reason = 'Excellent credit profile with low risk ratios';\n  nextSteps = 'Proceeding to final underwriting and documentation';\n  estimatedRate = 6.50;\n} else if (creditScore >= 680 && debtToIncome <= 43 && loanToValue <= 80) {\n  decision = 'APPROVED';\n  reason = 'Good credit profile meets lending criteria';\n  nextSteps = 'Standard documentation and processing';\n  estimatedRate = 6.75;\n} else {\n  decision = 'DECLINED';\n  reason = 'Does not meet minimum lending criteria';\n  nextSteps = 'Consider credit improvement or debt reduction';\n  estimatedRate = 0;\n}\n\n// Calculate monthly payment\nlet monthlyPayment = 0;\nif (estimatedRate > 0) {\n  const monthlyRate = estimatedRate / 100 / 12;\n  const numPayments = 30 * 12;\n  monthlyPayment = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);\n  monthlyPayment = Math.round(monthlyPayment * 100) / 100;\n}\n\nconsole.log('=== FINAL RESULTS ===');\nconsole.log('Decision:', decision);\nconsole.log('Monthly Payment:', monthlyPayment);\n\n// Return complete data\nreturn [{\n  json: {\n    // Original application data\n    ...applicationData,\n    \n    // Risk assessment results\n    credit_score: creditScore,\n    estimated_monthly_debt: Math.round(estimatedMonthlyDebt),\n    debt_to_income: debtToIncome,\n    \n    // Decision results\n    automated_decision: decision,\n    decision_reason: reason,\n    next_steps: nextSteps,\n    \n    // Loan terms\n    estimated_interest_rate: estimatedRate,\n    estimated_monthly_payment: monthlyPayment,\n    \n    // Status\n    status: 'Risk Assessment Complete',\n    risk_processed_date: new Date().toISOString(),\n    error: false\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -384
+      ],
+      "id": "ebcb65c9-f9a3-49bb-8dbb-21178bf4f951",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1n78PQg1zq2rewNz1tggdUi4kTuA893Nph0hcThrO0II",
+          "mode": "list",
+          "cachedResultName": "The DV Group Inc",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1n78PQg1zq2rewNz1tggdUi4kTuA893Nph0hcThrO0II/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Application",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1n78PQg1zq2rewNz1tggdUi4kTuA893Nph0hcThrO0II/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "application_id": "={{ $json.application_id }}",
+            "credit_score": "={{ $json.credit_score }}",
+            "debt_to_income_ratio": "={{ $json.debt_to_income }}",
+            "automated_decisio": "={{ $json.automated_decision }}",
+            "decision_reason": "={{ $json.decision_reason }}",
+            "monthly_debt_payments": "={{ $json.estimated_interest_rate }}",
+            "loan_to_value_ratio": "={{ $json.loan_to_value }}",
+            "status": "={{ $json.status }}",
+            " notes": "=",
+            "email": "={{ $json.email }}",
+            "error": "={{ $json.error }}",
+            "risk_processed_date": "={{ $json.risk_processed_date.replace(\"T\", \" \").slice(0, -5) }}",
+            "estimated_monthly_payment": "={{ $json.estimated_interest_rate }}",
+            "estimated_interest_rate": "={{ $json.estimated_interest_rate }}",
+            "next_steps": "={{ $json.next_steps }}"
+          },
+          "matchingColumns": [
+            "application_id"
+          ],
+          "schema": [
+            {
+              "id": "application_id",
+              "displayName": "application_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "submission_date",
+              "displayName": "submission_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_of_birth",
+              "displayName": "date_of_birth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ssn",
+              "displayName": "ssn",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "current_address",
+              "displayName": "current_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "employment_status",
+              "displayName": "employment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "employer_name",
+              "displayName": "employer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "monthly_income",
+              "displayName": "monthly_income",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "years_employed",
+              "displayName": "years_employed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_address",
+              "displayName": "property_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_value",
+              "displayName": "property_value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "current_mortgage_balance",
+              "displayName": "current_mortgage_balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "desired_loan_amount",
+              "displayName": "desired_loan_amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "loan_purpose",
+              "displayName": "loan_purpose",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "electronic_signature",
+              "displayName": "electronic_signature",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "signature_date",
+              "displayName": "signature_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "credit_score",
+              "displayName": "credit_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "monthly_debt_payments",
+              "displayName": "monthly_debt_payments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "debt_to_income_ratio",
+              "displayName": "debt_to_income_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "loan_to_value_ratio",
+              "displayName": "loan_to_value_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "automated_decisio",
+              "displayName": "automated_decisio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "decision_reason",
+              "displayName": "decision_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "assigned_officer",
+              "displayName": "assigned_officer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": " notes",
+              "displayName": " notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "next_steps",
+              "displayName": "next_steps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estimated_interest_rate",
+              "displayName": "estimated_interest_rate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estimated_monthly_payment",
+              "displayName": "estimated_monthly_payment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "risk_processed_date",
+              "displayName": "risk_processed_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "processing_complete",
+              "displayName": "processing_complete",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error",
+              "displayName": "error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1344,
+        -384
+      ],
+      "id": "a1d095e6-2dc7-4eb0-b2df-d8f17903bbe7",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g4qEuurVeKVgDlTr",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code1').item.json.email }}",
+        "subject": "=Loan Application Decision - {{ $json.application_id }}",
+        "emailType": "text",
+        "message": "=Dear {{ $('Code1').item.json.full_name }},  \n\nThank you for submitting your loan application through our automated pre-qualification system.  \n\n📋 APPLICATION SUMMARY \n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ \nApplication ID: {{ $json.application_id }} \nSubmission Date: {{ $('Code1').item.json.submission_date }} \nProperty Address: {{ $('Code1').item.json.property_address }} \nLoan Amount: ${{ $('Code').item.json.desired_loan_amount }} \nLoan Purpose: {{ $('Code1').item.json.loan_purpose }}  \n\n🎯 DECISION: {{ $('Code1').item.json.automated_decision }} \n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ \nReason: {{ $json.decision_reason }}  \n\n📊 ASSESSMENT DETAILS \n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ \nCredit Score: {{ $json.credit_score }} \nDebt-to-Income Ratio: {{ $('Code1').item.json.debt_to_income }}% \nLoan-to-Value Ratio: {{ $json.loan_to_value_ratio }}%  \nEstimated Interest Rate: {{ $('Code1').item.json.estimated_interest_rate }}% \nEstimated Monthly Payment: ${{ $json.estimated_monthly_payment | number_format }}   \n\n🚀 NEXT STEPS \n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ \n{{ $('Code1').item.json.next_steps }}  \n\nYour signature has been captured and all authorizations are on file.  \n\nBest regards, \nThe DV Group Inc \nAutomated Lending Division  \n\n\n--- \n\nThis is an automated message. Please do not reply to this email. For questions, contact: support@yourdomain.com",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1568,
+        -384
+      ],
+      "id": "3b11c5bd-b245-47f9-92b5-d60bdb15d1cd",
+      "name": "Send a message",
+      "webhookId": "b07dba82-aca0-4a69-b428-f7f5ce1d7b2f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z58IjR0j6wN6X3TW",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.data.fields[1].value }}",
+        "subject": "=Application Error - {{ $json.application_id }}",
+        "emailType": "text",
+        "message": "=Dear {{ $('Webhook').item.json.body.data.fields[0].value }},  \n\nWe encountered an issue processing your loan application:  \n\nError: {{ $json.message }} \nApplication ID: {{ $json.application_id }} \nTimestamp: {{ new Date().toISOString().replace(\"T\",\" \").slice(0, -5) }}  \n\nPlease contact support or resubmit your application.\n\nBest regards, \nThe DV Group Inc",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        -192
+      ],
+      "id": "1507c042-a269-4ff4-8be7-6b4d2a7d8a4f",
+      "name": "Send a message1",
+      "webhookId": "edcccbfa-9db0-4764-b760-5aaa538e3b2a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z58IjR0j6wN6X3TW",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -192
+      ],
+      "id": "2da736de-84d3-42ce-afed-3768895e821d",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C095F1VTRUP",
+          "mode": "list",
+          "cachedResultName": "all-the-dv-group"
+        },
+        "text": "=Hi Team \n\nWe've got a new borrower\n\nName: {{ $('Code1').item.json.full_name }}\nDecision: {{ $('Code1').item.json.automated_decision }}\nCredit Score: {{ $('Code1').item.json.credit_score }} \nDebt-to-Income Ratio: {{ $('Code1').item.json.debt_to_income }}% \nLoan-to-Value Ratio: {{ $('Code1').item.json.loan_to_value }}%  \nEstimated Interest Rate: {{ $('Code1').item.json.estimated_interest_rate }}% \nEstimated Monthly Payment: ${{ $('Code1').item.json.estimated_monthly_payment }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        -384
+      ],
+      "id": "e50bd879-a806-450a-b03f-1f75487aa6cd",
+      "name": "Send a message2",
+      "webhookId": "15090486-2887-4cca-9ccb-e5a27b618ad3",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "rIeQDoXK38aaiXVd",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "duru48.app.n8n.cloud",
+            "user-agent": "Tally Webhooks",
+            "content-length": "3681",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, br",
+            "baggage": "sentry-environment=production,sentry-release=2b74b7ae45f4c42c6d3a500ed3b1538bfbeccfd0,sentry-public_key=6af4b6673f1648edaa8fef3f2ca43405,sentry-trace_id=e21338973ff90c10a1dc58f8a849d46c,sentry-org_id=407628,sentry-sampled=false,sentry-sample_rand=0.39385812602707415,sentry-sample_rate=0.001",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "34.96.41.237",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "BE",
+            "cf-ray": "975f348c8274941b-LHR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sentry-trace": "e21338973ff90c10a1dc58f8a849d46c-b6420610950b5028-0",
+            "x-forwarded-for": "34.96.41.237, 172.70.160.188",
+            "x-forwarded-host": "duru48.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-7-c479b4d45-d25jw",
+            "x-is-trusted": "yes",
+            "x-real-ip": "34.96.41.237"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "eventId": "f603b6f5-000f-46fd-85e1-f329621bb39d",
+            "eventType": "FORM_RESPONSE",
+            "createdAt": "2025-08-27T23:03:58.057Z",
+            "data": {
+              "responseId": "OD8QAXg",
+              "submissionId": "OD8QAXg",
+              "respondentId": "ZMMdWA",
+              "formId": "wM4PNA",
+              "formName": "The DV Group Inc",
+              "createdAt": "2025-08-27T23:03:56.000Z",
+              "fields": [
+                {
+                  "key": "question_d9Y7kD",
+                  "label": "Full Legal Name:",
+                  "type": "INPUT_TEXT",
+                  "value": "Sarah Johnson"
+                },
+                {
+                  "key": "question_Y4Z2xz",
+                  "label": "Email:",
+                  "type": "INPUT_EMAIL",
+                  "value": "victor.practice.dev@gmail.com"
+                },
+                {
+                  "key": "question_D7VLZX",
+                  "label": "Phone:",
+                  "type": "INPUT_PHONE_NUMBER",
+                  "value": "+12345678900"
+                },
+                {
+                  "key": "question_jlMYGR",
+                  "label": "Date of Birth:",
+                  "type": "INPUT_DATE",
+                  "value": "1985-06-15"
+                },
+                {
+                  "key": "question_MELloE",
+                  "label": "Social Security Number:",
+                  "type": "INPUT_TEXT",
+                  "value": "123456789"
+                },
+                {
+                  "key": "question_JOLb5z",
+                  "label": "Current Address:",
+                  "type": "TEXTAREA",
+                  "value": "123 Oak Street, Beverly Hills, CA 90210"
+                },
+                {
+                  "key": "question_g9LXKM",
+                  "label": "Employment Status:",
+                  "type": "MULTIPLE_CHOICE",
+                  "value": [
+                    "10b5bd13-4ff7-4405-986d-d001da85cf5e"
+                  ],
+                  "options": [
+                    {
+                      "id": "10b5bd13-4ff7-4405-986d-d001da85cf5e",
+                      "text": "Full-time employee"
+                    },
+                    {
+                      "id": "9d3d541d-426e-4a6c-a9b2-874930408f9c",
+                      "text": "Self employed"
+                    },
+                    {
+                      "id": "b9fa91fa-5cb7-4bf5-941d-41f41a2db7e7",
+                      "text": "Retired"
+                    },
+                    {
+                      "id": "ba1a55c7-9f95-4073-af05-2459bc1a81c7",
+                      "text": "Part-time employee"
+                    }
+                  ]
+                },
+                {
+                  "key": "question_yJxrV6",
+                  "label": "Employers Name:",
+                  "type": "INPUT_TEXT",
+                  "value": "Microsoft Corporation"
+                },
+                {
+                  "key": "question_X4EdZe",
+                  "label": "Monthly Gross Income:",
+                  "type": "INPUT_NUMBER",
+                  "value": 15000
+                },
+                {
+                  "key": "question_8ZGV7k",
+                  "label": "Years at current job:",
+                  "type": "INPUT_NUMBER",
+                  "value": 8
+                },
+                {
+                  "key": "question_0eLzNP",
+                  "label": "Property Address:",
+                  "type": "TEXTAREA",
+                  "value": "456 Maple Avenue, Beverly Hills, CA 90210"
+                },
+                {
+                  "key": "question_z7Z4PZ",
+                  "label": "Estimated Property Value:",
+                  "type": "INPUT_NUMBER",
+                  "value": 500000
+                },
+                {
+                  "key": "question_5ZLoWv",
+                  "label": "Current Mortgage Balance:",
+                  "type": "INPUT_NUMBER",
+                  "value": 200000
+                },
+                {
+                  "key": "question_d9lXBD",
+                  "label": "Desired Loan Amount:",
+                  "type": "INPUT_NUMBER",
+                  "value": 250000
+                },
+                {
+                  "key": "question_Y4rXNz",
+                  "label": "Loan Purpose:",
+                  "type": "MULTIPLE_CHOICE",
+                  "value": [
+                    "67e04d1c-cf2c-451b-9cf3-4dd4fcadd857"
+                  ],
+                  "options": [
+                    {
+                      "id": "67e04d1c-cf2c-451b-9cf3-4dd4fcadd857",
+                      "text": "Cash-out Refinance"
+                    },
+                    {
+                      "id": "0dc93939-fc0c-4e1d-9f73-b678d3424bbd",
+                      "text": "Rate & Term Refinance"
+                    },
+                    {
+                      "id": "1983c2d6-e5a7-4d2f-8f77-817a8c72518b",
+                      "text": "Home Equity Loan "
+                    }
+                  ]
+                },
+                {
+                  "key": "question_D759gX",
+                  "label": "Electronic Signature:",
+                  "type": "SIGNATURE",
+                  "value": [
+                    {
+                      "id": "RJKDr4",
+                      "name": "48463ef1-7478-417d-8a1d-6c7ca5710b21.png",
+                      "url": "https://storage.tally.so/private/48463ef1-7478-417d-8a1d-6c7ca5710b21.png?id=RJKDr4&accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IlJKS0RyNCIsImZvcm1JZCI6IndNNFBOQSIsImlhdCI6MTc1NjMzNTgzOH0.DtmOf3POSWSytqrlw74ky_FSz5lDZxV5ygtwwj_4yq0&signature=2aee0d6ed45e29576a2fb4eb320270630a055669dee435461478455b3c630c02",
+                      "mimeType": "image/png",
+                      "size": 7286
+                    }
+                  ]
+                },
+                {
+                  "key": "question_l6LXJV",
+                  "label": "Credit Check Authorization:",
+                  "type": "CHECKBOXES",
+                  "value": [
+                    "38f02324-e2c8-4a41-a926-804a8a49fb45"
+                  ],
+                  "options": [
+                    {
+                      "id": "38f02324-e2c8-4a41-a926-804a8a49fb45",
+                      "text": ""
+                    }
+                  ]
+                },
+                {
+                  "key": "question_l6LXJV_38f02324-e2c8-4a41-a926-804a8a49fb45",
+                  "label": "Credit Check Authorization: ()",
+                  "type": "CHECKBOXES",
+                  "value": true
+                },
+                {
+                  "key": "question_RDR1Ev",
+                  "label": "I agree to terms and conditions:",
+                  "type": "CHECKBOXES",
+                  "value": [
+                    "5c082f2f-e8f3-4d9d-9b8e-3feec672d20a"
+                  ],
+                  "options": [
+                    {
+                      "id": "5c082f2f-e8f3-4d9d-9b8e-3feec672d20a",
+                      "text": ""
+                    }
+                  ]
+                },
+                {
+                  "key": "question_RDR1Ev_5c082f2f-e8f3-4d9d-9b8e-3feec672d20a",
+                  "label": "I agree to terms and conditions: ()",
+                  "type": "CHECKBOXES",
+                  "value": true
+                },
+                {
+                  "key": "question_o2oYX5",
+                  "label": "Date Signed:",
+                  "type": "INPUT_DATE",
+                  "value": "2025-08-28"
+                }
+              ]
+            }
+          },
+          "webhookUrl": "https://duru48.app.n8n.cloud/webhook-test/7cd3e44e-3e85-453f-a62e-761aba8ed00c",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        []
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a1b17ce7-19fe-441e-9067-46d5dc36ec1b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "43d63571f66d3b7726938033dfc00b737348a017ee071f520817b766217c8bf8"
+  },
+  "id": "4Gx3sbGPSTVgBFhX",
+  "tags": []
+}

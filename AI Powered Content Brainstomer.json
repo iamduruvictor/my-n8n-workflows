@@ -1,0 +1,441 @@
+{
+  "name": "AI Powered Content Brainstomer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "43f85cf3-ce9c-41e0-99e9-e0d85b95aeff",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f6848102-dde2-4f4a-ac90-b1afe705c124",
+      "name": "Webhook",
+      "webhookId": "43f85cf3-ce9c-41e0-99e9-e0d85b95aeff",
+      "notesInFlow": true,
+      "notes": "Receives the content data from the tally form"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "001b7f6c-0177-41c3-931d-bd2ec980626d",
+              "name": "body.data.fields[0].value",
+              "value": "={{ $json.body.data.fields[0].value }}",
+              "type": "string"
+            },
+            {
+              "id": "d8df2b58-28bc-4a82-a4a8-5d830690867a",
+              "name": "body.data.fields[1].value",
+              "value": "={{ $json.body.data.fields[1].value }}",
+              "type": "string"
+            },
+            {
+              "id": "1470ae08-18bb-4349-8b5e-f50a90ac4c78",
+              "name": "body.data.fields[2].value",
+              "value": "={{ $json.body.data.fields[2].value }}",
+              "type": "string"
+            },
+            {
+              "id": "439179ad-44a1-4476-ba6f-dafaac72a205",
+              "name": "body.data.fields[3].value",
+              "value": "={{ $json.body.data.fields[3].value }}",
+              "type": "string"
+            },
+            {
+              "id": "fdd3b710-f6cd-40aa-a685-6c1360239115",
+              "name": "body.data.fields[4].value",
+              "value": "={{ $json.body.data.fields[4].value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1e449a0a-f499-42fc-8488-ea80e8962282",
+      "name": "Edit Fields",
+      "notesInFlow": true,
+      "notes": "The set node then filters the data which i will be needing in mapping other nodes"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_hJn1GlD86DLWVZRg3LsGb-vmkbBVMquzoEL0Xbyx1M",
+          "mode": "list",
+          "cachedResultName": "My Content Calendar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hJn1GlD86DLWVZRg3LsGb-vmkbBVMquzoEL0Xbyx1M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hJn1GlD86DLWVZRg3LsGb-vmkbBVMquzoEL0Xbyx1M/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Topic": "={{ $json.body.data.fields[0].value }}",
+            "Platform": "={{ $json.body.data.fields[1].value }}",
+            "Proposed Date": "={{ $json.body.data.fields[2].value }}",
+            "Status": "={{ $json.body.data.fields[3].value }}",
+            "Submitted By": "={{ $json.body.data.fields[4].value }}"
+          },
+          "matchingColumns": [
+            "Topic"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Proposed Date",
+              "displayName": "Proposed Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Submitted By",
+              "displayName": "Submitted By",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        448,
+        0
+      ],
+      "id": "cf849e1d-6420-4451-8510-3cdb099a7c2d",
+      "name": "Append row in sheet",
+      "notesInFlow": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "APpHPfryDuybi47t",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "The content is then upload on my google sheet"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a social media manager.\nGenerate a short, engaging {{ $json.Platform }} post about {{ $json.Topic }}. The post should be professional and includes 3 relevant hastags.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        672,
+        0
+      ],
+      "id": "a52e6463-0f32-49ad-af32-ab75f35258d9",
+      "name": "Basic LLM Chain",
+      "notesInFlow": true,
+      "notes": "I use Gemini to generate a short draft which base on the topic i uploaded on my google sheet"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        768,
+        224
+      ],
+      "id": "ceb2077c-e21f-4f55-b58a-847712861e8a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gYa8xmOUyXMcu4ew",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7526809d-5b4a-450a-bce7-eb8da4c523b9",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "a330b0fc-39dc-4d24-b33f-a9398365e7b0",
+      "name": "Edit Fields1",
+      "notesInFlow": true,
+      "notes": "I usee set node to also flatten/parse the data that gemini generated from the content topic"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1_hJn1GlD86DLWVZRg3LsGb-vmkbBVMquzoEL0Xbyx1M",
+          "mode": "list",
+          "cachedResultName": "My Content Calendar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hJn1GlD86DLWVZRg3LsGb-vmkbBVMquzoEL0Xbyx1M/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_hJn1GlD86DLWVZRg3LsGb-vmkbBVMquzoEL0Xbyx1M/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Topic": "={{ $('Append row in sheet').item.json.Topic }}",
+            "AI Draft": "={{ $json.text }}"
+          },
+          "matchingColumns": [
+            "Topic"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "displayName": "Topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Proposed Date",
+              "displayName": "Proposed Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Submitted By",
+              "displayName": "Submitted By",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Draft",
+              "displayName": "AI Draft",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1296,
+        0
+      ],
+      "id": "91937b76-a7f9-4fd4-95dc-a17bad204fa7",
+      "name": "Update row in sheet",
+      "notesInFlow": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "APpHPfryDuybi47t",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "I then use the draft generated by gemini to update the AI Draft column on my google sheet "
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d94a3237-b3de-4ca2-a4af-785367c106c0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "08f5f8f3e06a9b00ae0472ef8f2e87cd5dcbb2e0482e74fe9752e4b44ea6ab1e"
+  },
+  "id": "ntFOZA68yNMYfSo5",
+  "tags": [
+    {
+      "createdAt": "2025-08-02T11:58:54.182Z",
+      "updatedAt": "2025-08-02T11:58:54.182Z",
+      "id": "GcCy50kJgz5mjG8m",
+      "name": "5th Project"
+    },
+    {
+      "createdAt": "2025-07-31T16:07:45.829Z",
+      "updatedAt": "2025-07-31T16:07:45.829Z",
+      "id": "nmINDMbqRV0lRZ8Q",
+      "name": "4th Project"
+    }
+  ]
+}
